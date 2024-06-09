@@ -1,14 +1,15 @@
 package com.ai.example;
 
+import com.ai.example.model.LlamaResponse;
+import com.ai.example.service.implementation.LlamaAiService;
 import org.springframework.ai.chat.ChatClient;
 import org.springframework.ai.chat.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -16,28 +17,25 @@ import reactor.core.publisher.Flux;
 public class AIController {
 
     @Autowired
-    private OllamaChatClient client;
+    private final LlamaAiService llamaAiService;
 
-    private static final String PROMPT = "what is java language";
-
-    public AIController(OllamaChatClient client) {
-        this.client = client;
+    @Autowired
+    public AIController(LlamaAiService llamaAiService) {
+        this.llamaAiService = llamaAiService;
     }
 
-    /*@GetMapping("/prompt")
-    public Flux<ChatResponse> promptResponse(
-            @RequestParam("prompt") String prompt
-    ) {
-        Prompt promptOb = new Prompt(prompt);
-        return client.stream(promptOb);
+    @GetMapping("api/v1/ai/generate")
+    public ResponseEntity<LlamaResponse> generate(
+            @RequestParam(value = "promptMessage", defaultValue = "Why is the sky blue?")
+            String promptMessage) {
+        final LlamaResponse aiResponse = llamaAiService.generateMessage(promptMessage);
+        return ResponseEntity.status(HttpStatus.OK).body(aiResponse);
+    }
 
-    }*/
-    @GetMapping("/prompt")
-    public Flux<String> promptResponse(
-            @RequestParam("prompt") String prompt
-    ) {
-        return client.stream(prompt);
-
+    @GetMapping("api/v1/ai/generate/joke/{topic}")
+    public ResponseEntity<LlamaResponse> generateJoke(@PathVariable String topic) {
+        final LlamaResponse aiResponse = llamaAiService.generateJoke(topic);
+        return ResponseEntity.status(HttpStatus.OK).body(aiResponse);
     }
 
 }
